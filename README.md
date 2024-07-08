@@ -160,7 +160,7 @@ curs.execute("close database c:\\synclite\\python\\data\\t.db");
 #You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 ```
 
-## 1. DuckDB Device : 
+## 2. DuckDB Device : 
 
 DuckDB device supports all database SQL operations (performed using SQLite syntax) and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
 
