@@ -29,7 +29,7 @@ This repository has been created to distribute the Extended SyncLite logger jar 
 <dependency>
     <groupId>io.synclite</groupId>
     <artifactId>synclite-logger-extended</artifactId>
-    <version>2024.07.07</version>
+    <version>2024.07.15</version>
 </dependency>
 ```
 
