@@ -6,7 +6,7 @@ SyncLite is a no-code, real-time, relational data consolidation platform empower
 
 For more details, refer : https://github.com/syncliteio/SyncLiteLoggerJava/blob/main/README.md
 
-Extended SyncLite Logger enables end to end real-time (CDC) data replication/consolidation from various application embedded databases including SQLite, DuckDB (more extensions coming up) to a wide range of industry leading database, data warehouse and data lakes.
+Extended SyncLite Logger enables end-to-end real-time (CDC) data replication/consonolidation from various embedded databases including SQLite, DuckDB (coming up more) to a wide range of database, data warehouse and data lakes.
 
 For more details, check out 
 Website : https://www.synclite.io
@@ -41,7 +41,7 @@ Refer src/main/resources/synclite_logger.conf file for all available configurati
 
 ## 1. SQLite Device : 
 
-SQLite device (aka transactional device) supports all database operations as supported by SQLite and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
+SQLite device (aka transcational device) supports all database operations as supported by SQLite and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
 
 ### Java
 ```
@@ -112,7 +112,7 @@ public class TestSQLiteDevice {
 	
 	public static void main(String[] args) throws ClassNotFoundException, SQLException {
 		appStartup();
-		TestSQLiteDevice testApp = new TestTransactionalDevice();
+		TestSQLiteDevice testApp = new TestSQLiteDevice();
 		testApp.myAppBusinessLogic();
 	}
 
@@ -162,7 +162,7 @@ curs.execute("close database c:\\synclite\\python\\data\\t.db");
 
 ## 2. DuckDB Device : 
 
-DuckDB device supports all database SQL operations (performed using SQLite syntax) and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
+DuckDB device supports all database SQL operations (as supported by SQLite wire protocol) and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
 
 ### Java
 ```
@@ -233,7 +233,7 @@ public class TestDuckDBDevice {
 	
 	public static void main(String[] args) throws ClassNotFoundException, SQLException {
 		appStartup();
-		TestDuckDBDevice testApp = new TestTransactionalDevice();
+		TestDuckDBDevice testApp = new TestDuckDBDevice();
 		testApp.myAppBusinessLogic();
 	}
 
@@ -281,6 +281,127 @@ curs.execute("close database c:\\synclite\\python\\data\\t.db");
 #You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 ```
 
+## 3. Apache Derby Device : 
+
+Derby device supports all database SQL operations (as supported by SQLite wire protocol) and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
+
+### Java
+```
+package testApp;
+
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
+import io.synclite.logger.*;
+
+
+public class TestDerbyDevice {
+	
+	public static Path syncLiteDBPath;
+	public static void appStartup() throws SQLException, ClassNotFoundException {
+		syncLiteDBPath = Path.of(System.getProperty("user.home"), "synclite", "db");
+		Class.forName("io.synclite.logger.Derby");
+		Path dbPath = syncLiteDBPath.resolve("t.db");
+		Derby.initialize(dbPath, syncLiteDBPath.resolve("synclite_logger.conf"));
+	}	
+	
+	public void myAppBusinessLogic() throws SQLException {
+		//
+		//Some application business logic
+		//
+		//Perform some database operations		
+		try (Connection conn = DriverManager.getConnection("jdbc:synclite_derby:" + syncLiteDBPath.resolve("t.db"))) {
+			try (Statement stmt = conn.createStatement()) { 
+				//Example of executing a DDL : CREATE TABLE. 
+				//You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
+				stmt.execute("CREATE TABLE feedback(rating INT, comment TEXT)");
+				
+				//Example of performing INSERT
+				stmt.execute("INSERT INTO feedback VALUES(3, 'Good product')");				
+			}
+			
+			//Example of setting Auto commit OFF to implement transactional semantics
+			conn.setAutoCommit(false);
+			try (Statement stmt = conn.createStatement()) { 
+				//Example of performing basic DML operations INSERT/UPDATE/DELETE
+				stmt.execute("UPDATE feedback SET comment = 'Better product' WHERE rating = 3");
+				stmt.execute("INSERT INTO feedback VALUES (1, 'Poor product')");
+				stmt.execute("DELETE FROM feedback WHERE rating = 1");
+			}
+			conn.commit();
+			conn.setAutoCommit(true);
+			
+			//Example of Prepared Statement functionality for bulk insert.			
+			try(PreparedStatement pstmt = conn.prepareStatement("INSERT INTO feedback VALUES(?, ?)")) {
+				pstmt.setInt(1, 4);
+				pstmt.setString(2, "Excellent Product");
+				pstmt.addBatch();
+				
+				pstmt.setInt(1, 5);
+				pstmt.setString(2, "Outstanding Product");
+				pstmt.addBatch();
+				
+				pstmt.executeBatch();			
+			}
+		}
+		//Close SyncLite database/device cleanly.
+		Derby.closeDevice(Path.of("t.db"));
+		//You can also close all open databases in a single SQL : CLOSE ALL DATABASES
+	}	
+	
+	public static void main(String[] args) throws ClassNotFoundException, SQLException {
+		appStartup();
+		TestDerbyDevice testApp = new TestDerbyDevice();
+		testApp.myAppBusinessLogic();
+	}
+
+}
+
+```
+### Python   
+
+```
+import jaydebeapi
+
+props = {
+  "config": "synclite_logger.conf",
+  "device-name" : "derby1"
+}
+conn = jaydebeapi.connect("io.synclite.logger.Derby",
+                           "jdbc:synclite_derby:c:\\synclite\\python\\data\\t.db",
+                           props,
+                           "synclite-logger-<version>.jar",)
+
+curs = conn.cursor()
+
+#Example of executing a DDL : CEATE TABLE.
+#You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
+curs.execute('CREATE TABLE feedback(rating INT, comment TEXT)')
+
+#Example of performing basic DML operations INSERT/UPDATE/DELETE
+curs.execute("insert into feedback values (3, 'Good product')")
+
+#Example of setting Auto commit OFF to implement transactional semantics
+conn.jconn.setAutoCommit(False)
+curs.execute("update feedback set comment = 'Better product' where rating = 3")
+curs.execute("insert into feedback values (1, 'Poor product')")
+curs.execute("delete from feedback where rating = 1")
+conn.commit()
+conn.jconn.setAutoCommit(True)
+
+
+#Example of Prepared Statement functionality for bulk insert.
+args = [[4, 'Excellent product'],[5, 'Outstanding product']]
+
+#Close SyncLite database/device cleanly.
+curs.execute("close database c:\\synclite\\python\\data\\t.db");
+
+#You can also close all open databases in a single SQL : CLOSE ALL DATABASES
+```
+
 
 # Deploying SyncLite Consolidator
 
@@ -290,4 +411,3 @@ Refer https://hub.docker.com/r/syncliteio/synclite-consolidator for setting up S
 # Support
 
 Contact support@synclite.io for support and feedback.
-
