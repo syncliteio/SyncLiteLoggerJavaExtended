@@ -2,11 +2,11 @@
 
 SyncLite is a no-code, real-time, relational data consolidation platform empowering developers to rapidly build data-intensive applications for desktops, edge devices, smartphones, with the capability to enable in-app data management, in-app analytics and perform real-time data consolidation from numerous application instances into one or more databases, data warehouses, or data lakes of your choice.
 
-{Edge/Desktop/Phone Apps} + {SyncLite Logger} ------> {Staging Storage} ------> { SyncLite Consolidator} -----> {Destination DB/DW/DataLakes}
+{Edge/Desktop/Phone Apps} + {SyncLite Logger + Embedded databases} ------> {Staging Storage} ------> { SyncLite Consolidator} -----> {Destination DB/DW/DataLakes}
 
 For more details, refer : https://github.com/syncliteio/SyncLiteLoggerJava/blob/main/README.md
 
-Extended SyncLite Logger enables end-to-end real-time (CDC) data replication/consonolidation from various embedded databases including SQLite, DuckDB (coming up more) to a wide range of database, data warehouse and data lakes.
+Extended SyncLite Logger enables end-to-end real-time (CDC) data replication/consonolidation from various embedded databases including SQLite, DuckDB, Apache Derby and H2 to a wide range of database, data warehouse and data lakes.
 
 For more details, check out 
 Website : https://www.synclite.io
@@ -17,7 +17,7 @@ YouTube : https://www.youtube.com/@syncliteplatform
 
 SyncLite Platform comprises of two components : SyncLite Logger and SyncLite Consolidator.
 
-1. SyncLite EdgeDB aka Logger ( and Syncite Extended Logger) : SyncLite Logger is a lighweight JDBC wrapper built on top of SQLite ( extended to other embedded databases such as DuckDB), providing a SQL interface over JDBC for user applications, enabling them for in-app data management/analytics while logging all the SQL transactional activity into log files and shipping them to one of more configured staging storages like SFTP/S3/MinIO/Kafka/GoogleDrive/MSOneDrive/NFS etc. 
+1. SyncLite Logger(and Syncite Extended Logger) : SyncLite Logger is a lighweight JDBC wrapper built on top of SQLite (extended to other embedded databases such as DuckDB, Apache Derby and H2), providing a SQL interface over JDBC for user applications, enabling them for in-app data management/analytics using one or more supported embedded databases, while logging all the SQL transactional activity into log files and shipping them to one of more configured staging storages like SFTP/S3/MinIO/Kafka/GoogleDrive/MSOneDrive/NFS etc. 
 
 2. SyncLite Consolidator : SyncLite Consolidator is a Java application deployed on an on-premise host or a cloud VM is configured to scan thousands of SyncLite devices/databases and their logs continously from the configured staging storage which are uploaded by numerous edge/desktop applications, performs real-time transactional data replication/consolidation into one or more configured databases, data warehouses or data lakes of user's choice. Refer : https://hub.docker.com/r/syncliteio/synclite-consolidator
    
@@ -29,7 +29,7 @@ This repository has been created to distribute the Extended SyncLite logger jar 
 <dependency>
     <groupId>io.synclite</groupId>
     <artifactId>synclite-logger-extended</artifactId>
-    <version>2024.07.15</version>
+    <version>2024.07.26</version>
 </dependency>
 ```
 
@@ -39,7 +39,7 @@ Refer src/main/resources/synclite_logger.conf file for all available configurati
 
 # Application Code Samples (SQL API)
 
-## 1. SQLite Device : 
+## 1. SQLite : 
 
 SQLite device (aka transcational device) supports all database operations as supported by SQLite and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
 
@@ -160,9 +160,9 @@ curs.execute("close database c:\\synclite\\python\\data\\t.db");
 #You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 ```
 
-## 2. DuckDB Device : 
+## 2. DuckDB : 
 
-DuckDB device supports all database SQL operations (as supported by SQLite wire protocol) and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
+DuckDB device supports all SQL operations, performs transactional logging of all the DDL and DML operations performed by the application. It empowersdevelopers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
 
 ### Java
 ```
@@ -281,9 +281,9 @@ curs.execute("close database c:\\synclite\\python\\data\\t.db");
 #You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 ```
 
-## 3. Apache Derby Device : 
+## 3. Apache Derby : 
 
-Derby device supports all database SQL operations (as supported by SQLite wire protocol) and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
+Apache Derby device supports all SQL operations, performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
 
 ### Java
 ```
@@ -402,6 +402,126 @@ curs.execute("close database c:\\synclite\\python\\data\\t.db");
 #You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 ```
 
+## 4. H2 : 
+
+H2 device supports all SQL operations, performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
+
+### Java
+```
+package testApp;
+
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
+import io.synclite.logger.*;
+
+
+public class TestH2Device {
+	
+	public static Path syncLiteDBPath;
+	public static void appStartup() throws SQLException, ClassNotFoundException {
+		syncLiteDBPath = Path.of(System.getProperty("user.home"), "synclite", "db");
+		Class.forName("io.synclite.logger.H2");
+		Path dbPath = syncLiteDBPath.resolve("t.db");
+		H2.initialize(dbPath, syncLiteDBPath.resolve("synclite_logger.conf"));
+	}	
+	
+	public void myAppBusinessLogic() throws SQLException {
+		//
+		//Some application business logic
+		//
+		//Perform some database operations		
+		try (Connection conn = DriverManager.getConnection("jdbc:synclite_h2:" + syncLiteDBPath.resolve("t.db"))) {
+			try (Statement stmt = conn.createStatement()) { 
+				//Example of executing a DDL : CREATE TABLE. 
+				//You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
+				stmt.execute("CREATE TABLE feedback(rating INT, comment TEXT)");
+				
+				//Example of performing INSERT
+				stmt.execute("INSERT INTO feedback VALUES(3, 'Good product')");				
+			}
+			
+			//Example of setting Auto commit OFF to implement transactional semantics
+			conn.setAutoCommit(false);
+			try (Statement stmt = conn.createStatement()) { 
+				//Example of performing basic DML operations INSERT/UPDATE/DELETE
+				stmt.execute("UPDATE feedback SET comment = 'Better product' WHERE rating = 3");
+				stmt.execute("INSERT INTO feedback VALUES (1, 'Poor product')");
+				stmt.execute("DELETE FROM feedback WHERE rating = 1");
+			}
+			conn.commit();
+			conn.setAutoCommit(true);
+			
+			//Example of Prepared Statement functionality for bulk insert.			
+			try(PreparedStatement pstmt = conn.prepareStatement("INSERT INTO feedback VALUES(?, ?)")) {
+				pstmt.setInt(1, 4);
+				pstmt.setString(2, "Excellent Product");
+				pstmt.addBatch();
+				
+				pstmt.setInt(1, 5);
+				pstmt.setString(2, "Outstanding Product");
+				pstmt.addBatch();
+				
+				pstmt.executeBatch();			
+			}
+		}
+		//Close SyncLite database/device cleanly.
+		H2.closeDevice(Path.of("t.db"));
+		//You can also close all open databases in a single SQL : CLOSE ALL DATABASES
+	}	
+	
+	public static void main(String[] args) throws ClassNotFoundException, SQLException {
+		appStartup();
+		TestH2Device testApp = new TestH2Device();
+		testApp.myAppBusinessLogic();
+	}
+
+}
+
+```
+### Python   
+
+```
+import jaydebeapi
+
+props = {
+  "config": "synclite_logger.conf",
+  "device-name" : "h2device1"
+}
+conn = jaydebeapi.connect("io.synclite.logger.H2",
+                           "jdbc:synclite_h2:c:\\synclite\\python\\data\\t.db",
+                           props,
+                           "synclite-logger-<version>.jar",)
+
+curs = conn.cursor()
+
+#Example of executing a DDL : CEATE TABLE.
+#You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
+curs.execute('CREATE TABLE feedback(rating INT, comment TEXT)')
+
+#Example of performing basic DML operations INSERT/UPDATE/DELETE
+curs.execute("insert into feedback values (3, 'Good product')")
+
+#Example of setting Auto commit OFF to implement transactional semantics
+conn.jconn.setAutoCommit(False)
+curs.execute("update feedback set comment = 'Better product' where rating = 3")
+curs.execute("insert into feedback values (1, 'Poor product')")
+curs.execute("delete from feedback where rating = 1")
+conn.commit()
+conn.jconn.setAutoCommit(True)
+
+
+#Example of Prepared Statement functionality for bulk insert.
+args = [[4, 'Excellent product'],[5, 'Outstanding product']]
+
+#Close SyncLite database/device cleanly.
+curs.execute("close database c:\\synclite\\python\\data\\t.db");
+
+#You can also close all open databases in a single SQL : CLOSE ALL DATABASES
+```
 
 # Deploying SyncLite Consolidator
 

@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.synclite</groupId>
 	<artifactId>synclite-logger-extended</artifactId>
-	<version>2024.07.15</version>
+	<version>2024.07.26</version>
 	<name>Extended SyncLite Logger</name>
 	<description>SyncLite EdgeDB aka SyncLite Logger for Java applications, extended to other embedded/application databases</description>
 	<url>https://github.com/syncliteio/SyncLiteLoggerJava</url>
@@ -31,7 +31,7 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
         	<maven.javadoc.tags>
-            		EdgeDB, RDBMS, JDBC, SQLite, DuckDB, ApacheDerby
+            		EdgeDB, RDBMS, JDBC, SQLite, DuckDB, ApacheDerby, H2
         	</maven.javadoc.tags>
 	</properties>
 	<distributionManagement>
