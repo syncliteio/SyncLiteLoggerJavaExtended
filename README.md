@@ -29,7 +29,7 @@ This repository has been created to distribute the Extended SyncLite logger jar 
 <dependency>
     <groupId>io.synclite</groupId>
     <artifactId>synclite-logger-extended</artifactId>
-    <version>2024.07.26</version>
+    <version>2024.07.31</version>
 </dependency>
 ```
 
@@ -153,6 +153,7 @@ conn.jconn.setAutoCommit(True)
 
 #Example of Prepared Statement functionality for bulk insert.
 args = [[4, 'Excellent product'],[5, 'Outstanding product']]
+curs.executemany("insert into feedback values (?, ?)", args)
 
 #Close SyncLite database/device cleanly.
 curs.execute("close database c:\\synclite\\python\\data\\t.db");
@@ -274,6 +275,7 @@ conn.jconn.setAutoCommit(True)
 
 #Example of Prepared Statement functionality for bulk insert.
 args = [[4, 'Excellent product'],[5, 'Outstanding product']]
+curs.executemany("insert into feedback values (?, ?)", args)
 
 #Close SyncLite database/device cleanly.
 curs.execute("close database c:\\synclite\\python\\data\\t.db");
@@ -395,6 +397,7 @@ conn.jconn.setAutoCommit(True)
 
 #Example of Prepared Statement functionality for bulk insert.
 args = [[4, 'Excellent product'],[5, 'Outstanding product']]
+curs.executemany("insert into feedback values (?, ?)", args)
 
 #Close SyncLite database/device cleanly.
 curs.execute("close database c:\\synclite\\python\\data\\t.db");
@@ -516,6 +519,129 @@ conn.jconn.setAutoCommit(True)
 
 #Example of Prepared Statement functionality for bulk insert.
 args = [[4, 'Excellent product'],[5, 'Outstanding product']]
+curs.executemany("insert into feedback values (?, ?)", args)
+
+#Close SyncLite database/device cleanly.
+curs.execute("close database c:\\synclite\\python\\data\\t.db");
+
+#You can also close all open databases in a single SQL : CLOSE ALL DATABASES
+```
+
+## 5. HyperSQL : 
+
+HyperSQL device supports all SQL operations, performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
+
+### Java
+```
+package testApp;
+
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
+import io.synclite.logger.*;
+
+
+public class TestHyperSQLDevice {
+	
+	public static Path syncLiteDBPath;
+	public static void appStartup() throws SQLException, ClassNotFoundException {
+		syncLiteDBPath = Path.of(System.getProperty("user.home"), "synclite", "db");
+		Class.forName("io.synclite.logger.HyperSQL");
+		Path dbPath = syncLiteDBPath.resolve("t.db");
+		HyperSQL.initialize(dbPath, syncLiteDBPath.resolve("synclite_logger.conf"));
+	}	
+	
+	public void myAppBusinessLogic() throws SQLException {
+		//
+		//Some application business logic
+		//
+		//Perform some database operations		
+		try (Connection conn = DriverManager.getConnection("jdbc:synclite_hsqldb:" + syncLiteDBPath.resolve("t.db"))) {
+			try (Statement stmt = conn.createStatement()) { 
+				//Example of executing a DDL : CREATE TABLE. 
+				//You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
+				stmt.execute("CREATE TABLE feedback(rating INT, comment TEXT)");
+				
+				//Example of performing INSERT
+				stmt.execute("INSERT INTO feedback VALUES(3, 'Good product')");				
+			}
+			
+			//Example of setting Auto commit OFF to implement transactional semantics
+			conn.setAutoCommit(false);
+			try (Statement stmt = conn.createStatement()) { 
+				//Example of performing basic DML operations INSERT/UPDATE/DELETE
+				stmt.execute("UPDATE feedback SET comment = 'Better product' WHERE rating = 3");
+				stmt.execute("INSERT INTO feedback VALUES (1, 'Poor product')");
+				stmt.execute("DELETE FROM feedback WHERE rating = 1");
+			}
+			conn.commit();
+			conn.setAutoCommit(true);
+			
+			//Example of Prepared Statement functionality for bulk insert.			
+			try(PreparedStatement pstmt = conn.prepareStatement("INSERT INTO feedback VALUES(?, ?)")) {
+				pstmt.setInt(1, 4);
+				pstmt.setString(2, "Excellent Product");
+				pstmt.addBatch();
+				
+				pstmt.setInt(1, 5);
+				pstmt.setString(2, "Outstanding Product");
+				pstmt.addBatch();
+				
+				pstmt.executeBatch();			
+			}
+		}
+		//Close SyncLite database/device cleanly.
+		HyperSQL.closeDevice(Path.of("t.db"));
+		//You can also close all open databases in a single SQL : CLOSE ALL DATABASES
+	}	
+	
+	public static void main(String[] args) throws ClassNotFoundException, SQLException {
+		appStartup();
+		TestH2Device testApp = new TestH2Device();
+		testApp.myAppBusinessLogic();
+	}
+
+}
+
+```
+### Python   
+
+```
+import jaydebeapi
+
+props = {
+  "config": "synclite_logger.conf",
+  "device-name" : "hsqldb1"
+}
+conn = jaydebeapi.connect("io.synclite.logger.HyperSQL",
+                           "jdbc:synclite_hsqldb:c:\\synclite\\python\\data\\t.db",
+                           props,
+                           "synclite-logger-<version>.jar",)
+
+curs = conn.cursor()
+
+#Example of executing a DDL : CEATE TABLE.
+#You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
+curs.execute('CREATE TABLE feedback(rating INT, comment TEXT)')
+
+#Example of performing basic DML operations INSERT/UPDATE/DELETE
+curs.execute("insert into feedback values (3, 'Good product')")
+
+#Example of setting Auto commit OFF to implement transactional semantics
+conn.jconn.setAutoCommit(False)
+curs.execute("update feedback set comment = 'Better product' where rating = 3")
+curs.execute("insert into feedback values (1, 'Poor product')")
+curs.execute("delete from feedback where rating = 1")
+conn.commit()
+conn.jconn.setAutoCommit(True)
+
+
+#Example of Prepared Statement functionality for bulk insert.
+args = [[4, 'Excellent product'],[5, 'Outstanding product']]
+curs.executemany("insert into feedback values (?, ?)", args)
 
 #Close SyncLite database/device cleanly.
 curs.execute("close database c:\\synclite\\python\\data\\t.db");

@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.synclite</groupId>
 	<artifactId>synclite-logger-extended</artifactId>
-	<version>2024.07.26</version>
+	<version>2024.07.31</version>
 	<name>Extended SyncLite Logger</name>
 	<description>SyncLite EdgeDB aka SyncLite Logger for Java applications, extended to other embedded/application databases</description>
 	<url>https://github.com/syncliteio/SyncLiteLoggerJava</url>
