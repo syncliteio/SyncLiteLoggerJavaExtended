@@ -1,10 +1,12 @@
-# SyncLite Platform
+# SyncLite - Build Anything Sync Anywhere
 
 SyncLite is a no-code, real-time, relational data consolidation platform empowering developers to rapidly build data-intensive applications for desktops, edge devices, smartphones, with the capability to enable in-app data management, in-app analytics and perform real-time data consolidation from numerous application instances into one or more databases, data warehouses, or data lakes of your choice.
 
+```
 {Edge/Desktop/Phone Apps} + {SyncLite Logger + Embedded databases} ------> {Staging Storage} ------> { SyncLite Consolidator} -----> {Destination DB/DW/DataLakes}
+```
 
-For more details, refer : https://github.com/syncliteio/SyncLiteLoggerJava/blob/main/README.md
+For more details, refer : https://github.com/syncliteio/SyncLiteLoggerJava
 
 Extended SyncLite Logger enables end-to-end real-time (CDC) data replication/consonolidation from various embedded databases including SQLite, DuckDB, Apache Derby and H2 to a wide range of database, data warehouse and data lakes.
 
@@ -15,12 +17,11 @@ YouTube : https://www.youtube.com/@syncliteplatform
 
 # SyncLite Components
 
-SyncLite Platform comprises of two components : SyncLite Logger and SyncLite Consolidator.
+```SyncLite Logger(and Syncite Extended Logger)``` : SyncLite Logger is a lighweight JDBC wrapper built on top of SQLite (extended to other embedded databases such as DuckDB, Apache Derby and H2), providing a SQL interface over JDBC for user applications, enabling them for in-app data management/analytics using one or more supported embedded databases, while logging all the SQL transactional activity into log files and shipping them to one of more configured staging storages like SFTP/S3/MinIO/Kafka/GoogleDrive/MSOneDrive/NFS etc. 
 
-1. SyncLite Logger(and Syncite Extended Logger) : SyncLite Logger is a lighweight JDBC wrapper built on top of SQLite (extended to other embedded databases such as DuckDB, Apache Derby and H2), providing a SQL interface over JDBC for user applications, enabling them for in-app data management/analytics using one or more supported embedded databases, while logging all the SQL transactional activity into log files and shipping them to one of more configured staging storages like SFTP/S3/MinIO/Kafka/GoogleDrive/MSOneDrive/NFS etc. 
+```SyncLite Consolidator``` : SyncLite Consolidator is a Java application deployed on an on-premise host or a cloud VM is configured to scan thousands of SyncLite devices/databases and their logs continously from the configured staging storage which are uploaded by numerous edge/desktop applications, performs real-time transactional data replication/consolidation into one or more configured databases, data warehouses or data lakes of user's choice. Refer : https://hub.docker.com/r/syncliteio/synclite-consolidator
 
-2. SyncLite Consolidator : SyncLite Consolidator is a Java application deployed on an on-premise host or a cloud VM is configured to scan thousands of SyncLite devices/databases and their logs continously from the configured staging storage which are uploaded by numerous edge/desktop applications, performs real-time transactional data replication/consolidation into one or more configured databases, data warehouses or data lakes of user's choice. Refer : https://hub.docker.com/r/syncliteio/synclite-consolidator
-   
+(Note: Refer https://github.com/syncliteio/SyncLiteLoggerJava for other components).
 # Using Extended SyncLite Logger
 
 This repository has been created to distribute the Extended SyncLite logger jar file as updated in src/main/resources. You can use the following maven dependency in your edge/desktop applications for creating and operating edge databases/devices.
@@ -33,17 +34,17 @@ This repository has been created to distribute the Extended SyncLite logger jar 
 </dependency>
 ```
 
-# Configuration File
+## Configuration File
 
 Refer src/main/resources/synclite_logger.conf file for all available configuration options for SyncLite Logger. Refer "SyncLite Logger Configuration" section in the documentation at https://www.synclite.io/resources/documentation for more details about all configuration options. 
 
-# Application Code Samples (SQL API)
+## Application Code Samples (SQL API)
 
-## 1. SQLite : 
+### 1. SQLite : 
 
 SQLite device (aka transcational device) supports all database operations as supported by SQLite and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
 
-### Java
+#### Java
 ```
 package testApp;
 
@@ -119,7 +120,7 @@ public class TestSQLiteDevice {
 }
 
 ```
-### Python   
+#### Python   
 
 ```
 import jaydebeapi
@@ -161,11 +162,11 @@ curs.execute("close database c:\\synclite\\python\\data\\t.db");
 #You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 ```
 
-## 2. DuckDB : 
+### 2. DuckDB : 
 
 DuckDB device supports all SQL operations, performs transactional logging of all the DDL and DML operations performed by the application. It empowersdevelopers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
 
-### Java
+#### Java
 ```
 package testApp;
 
@@ -241,7 +242,7 @@ public class TestDuckDBDevice {
 }
 
 ```
-### Python   
+#### Python   
 
 ```
 import jaydebeapi
@@ -283,11 +284,11 @@ curs.execute("close database c:\\synclite\\python\\data\\t.db");
 #You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 ```
 
-## 3. Apache Derby : 
+### 3. Apache Derby : 
 
 Apache Derby device supports all SQL operations, performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
 
-### Java
+#### Java
 ```
 package testApp;
 
@@ -363,7 +364,7 @@ public class TestDerbyDevice {
 }
 
 ```
-### Python   
+#### Python   
 
 ```
 import jaydebeapi
@@ -405,11 +406,11 @@ curs.execute("close database c:\\synclite\\python\\data\\t.db");
 #You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 ```
 
-## 4. H2 : 
+### 4. H2 : 
 
 H2 device supports all SQL operations, performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
 
-### Java
+#### Java
 ```
 package testApp;
 
@@ -485,7 +486,7 @@ public class TestH2Device {
 }
 
 ```
-### Python   
+#### Python   
 
 ```
 import jaydebeapi
@@ -527,11 +528,11 @@ curs.execute("close database c:\\synclite\\python\\data\\t.db");
 #You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 ```
 
-## 5. HyperSQL : 
+### 5. HyperSQL : 
 
 HyperSQL device supports all SQL operations, performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
 
-### Java
+#### Java
 ```
 package testApp;
 
@@ -607,7 +608,7 @@ public class TestHyperSQLDevice {
 }
 
 ```
-### Python   
+#### Python   
 
 ```
 import jaydebeapi
