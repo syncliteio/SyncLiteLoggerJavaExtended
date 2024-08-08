@@ -42,7 +42,7 @@ Refer src/main/resources/synclite_logger.conf file for all available configurati
 
 ### 1. SQLite : 
 
-SQLite device (aka transcational device) supports all database operations as supported by SQLite and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
+SQLite transactional device supports all database operations as supported by SQLite and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as building data-intensive sync-ready applications, Edge + Cloud GenAI search and RAG applications, native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases etc.
 
 #### Java
 ```
@@ -72,7 +72,7 @@ public class TestSQLiteDevice {
 		//Some application business logic
 		//
 		//Perform some database operations		
-		try (Connection conn = DriverManager.getConnection("jdbc:synclite_sqlite:" + syncLiteDBPath.resolve("t.db"))) {
+		try (Connection conn = DriverManager.getConnection("jdbc:synclite_sqlite:" + syncLiteDBPath.resolve("test_sqlite.db"))) {
 			try (Statement stmt = conn.createStatement()) { 
 				//Example of executing a DDL : CREATE TABLE. 
 				//You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
@@ -107,7 +107,7 @@ public class TestSQLiteDevice {
 			}
 		}
 		//Close SyncLite database/device cleanly.
-		SQLite.closeDevice(Path.of("t.db"));
+		SQLite.closeDevice(Path.of("test_sqlite.db"));
 		//You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 	}	
 	
@@ -130,7 +130,7 @@ props = {
   "device-name" : "sqlite1"
 }
 conn = jaydebeapi.connect("io.synclite.logger.SQLite",
-                           "jdbc:synclite_sqlite:c:\\synclite\\python\\data\\t.db",
+                           "jdbc:synclite_sqlite:c:\\synclite\\python\\data\\test_sqlite.db",
                            props,
                            "synclite-logger-<version>.jar",)
 
@@ -157,14 +157,14 @@ args = [[4, 'Excellent product'],[5, 'Outstanding product']]
 curs.executemany("insert into feedback values (?, ?)", args)
 
 #Close SyncLite database/device cleanly.
-curs.execute("close database c:\\synclite\\python\\data\\t.db");
+curs.execute("close database c:\\synclite\\python\\data\\test_sqlite.db");
 
 #You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 ```
 
 ### 2. DuckDB : 
 
-DuckDB device supports all SQL operations, performs transactional logging of all the DDL and DML operations performed by the application. It empowersdevelopers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
+DuckDB transactional device supports all database operations and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as building data-intensive sync-ready applications, Edge + Cloud GenAI search and RAG applications, native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases etc.
 
 #### Java
 ```
@@ -185,7 +185,7 @@ public class TestDuckDBDevice {
 	public static void appStartup() throws SQLException, ClassNotFoundException {
 		syncLiteDBPath = Path.of(System.getProperty("user.home"), "synclite", "db");
 		Class.forName("io.synclite.logger.DuckDB");
-		Path dbPath = syncLiteDBPath.resolve("t.db");
+		Path dbPath = syncLiteDBPath.resolve("test_duckdb.db");
 		DuckDB.initialize(dbPath, syncLiteDBPath.resolve("synclite_logger.conf"));
 	}	
 	
@@ -194,7 +194,7 @@ public class TestDuckDBDevice {
 		//Some application business logic
 		//
 		//Perform some database operations		
-		try (Connection conn = DriverManager.getConnection("jdbc:synclite_duckdb:" + syncLiteDBPath.resolve("t.db"))) {
+		try (Connection conn = DriverManager.getConnection("jdbc:synclite_duckdb:" + syncLiteDBPath.resolve("test_duckdb.db"))) {
 			try (Statement stmt = conn.createStatement()) { 
 				//Example of executing a DDL : CREATE TABLE. 
 				//You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
@@ -229,7 +229,7 @@ public class TestDuckDBDevice {
 			}
 		}
 		//Close SyncLite database/device cleanly.
-		DuckDB.closeDevice(Path.of("t.db"));
+		DuckDB.closeDevice(Path.of("test_duckdb.db"));
 		//You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 	}	
 	
@@ -249,10 +249,10 @@ import jaydebeapi
 
 props = {
   "config": "synclite_logger.conf",
-  "device-name" : "sqlite1"
+  "device-name" : "duckdb1"
 }
 conn = jaydebeapi.connect("io.synclite.logger.DuckDB",
-                           "jdbc:synclite_duckdb:c:\\synclite\\python\\data\\t.db",
+                           "jdbc:synclite_duckdb:c:\\synclite\\python\\data\\test_duckdb.db",
                            props,
                            "synclite-logger-<version>.jar",)
 
@@ -279,14 +279,14 @@ args = [[4, 'Excellent product'],[5, 'Outstanding product']]
 curs.executemany("insert into feedback values (?, ?)", args)
 
 #Close SyncLite database/device cleanly.
-curs.execute("close database c:\\synclite\\python\\data\\t.db");
+curs.execute("close database c:\\synclite\\python\\data\\test_duckdb.db");
 
 #You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 ```
 
 ### 3. Apache Derby : 
 
-Apache Derby device supports all SQL operations, performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
+Apache Derby transactional device supports all database operations and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as building data-intensive sync-ready applications, Edge + Cloud GenAI search and RAG applications, native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases etc.
 
 #### Java
 ```
@@ -307,7 +307,7 @@ public class TestDerbyDevice {
 	public static void appStartup() throws SQLException, ClassNotFoundException {
 		syncLiteDBPath = Path.of(System.getProperty("user.home"), "synclite", "db");
 		Class.forName("io.synclite.logger.Derby");
-		Path dbPath = syncLiteDBPath.resolve("t.db");
+		Path dbPath = syncLiteDBPath.resolve("test_derby.db");
 		Derby.initialize(dbPath, syncLiteDBPath.resolve("synclite_logger.conf"));
 	}	
 	
@@ -316,7 +316,7 @@ public class TestDerbyDevice {
 		//Some application business logic
 		//
 		//Perform some database operations		
-		try (Connection conn = DriverManager.getConnection("jdbc:synclite_derby:" + syncLiteDBPath.resolve("t.db"))) {
+		try (Connection conn = DriverManager.getConnection("jdbc:synclite_derby:" + syncLiteDBPath.resolve("test_derby.db"))) {
 			try (Statement stmt = conn.createStatement()) { 
 				//Example of executing a DDL : CREATE TABLE. 
 				//You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
@@ -351,7 +351,7 @@ public class TestDerbyDevice {
 			}
 		}
 		//Close SyncLite database/device cleanly.
-		Derby.closeDevice(Path.of("t.db"));
+		Derby.closeDevice(Path.of("test_derby.db"));
 		//You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 	}	
 	
