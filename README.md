@@ -209,7 +209,7 @@ curs.execute("close database c:\\synclite\\python\\data\\test_sqlite.db");
 
 ### Appender Devices :
 
-Appender devices (SQLiteAppender, DuckDBAppender, DerbyAppender, H2Appender, HyperSQLAppender) supports all DDL operations and Prepared Statement based INSERT operations and are highly optimized for high speed concurrent batched data ingestion, performing logging of the ingested data. Unlike transactional devices, appender devices only allow INSERT DML operations (UPDATE and DELETE are not allowed). Appender devices empower developers to build high volume streaming applications enabled with last mile data integration from thousands of edge points into centralized database destinations as well as in-app analytics by enabling fast read access to ingested data from the underlying local embedded databases storing the ingested streamed data.
+Appender devices (SQLiteAppender, DuckDBAppender, DerbyAppender, H2Appender, HyperSQLAppender) supports all DDL operations and Prepared Statement based INSERT operations and are highly optimized for high speed concurrent batched data ingestion, performing logging of the ingested data. Unlike transactional devices, appender devices only allow INSERT DML operations (UPDATE and DELETE are not allowed). Appender devices empower developers to build high volume streaming applications enabled with last mile data integration from thousands of edge points into centralized database destinations as well as in-app analytics by enabling fast read access to ingested data from the underlying local embedded databases storing the ingested/streamed data.
 
 #### Java
 
