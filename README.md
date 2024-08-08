@@ -30,7 +30,7 @@ This repository has been created to distribute the Extended SyncLite logger jar 
 <dependency>
     <groupId>io.synclite</groupId>
     <artifactId>synclite-logger-extended</artifactId>
-    <version>2024.07.31</version>
+    <version>2024.08.08</version>
 </dependency>
 ```
 
@@ -40,9 +40,9 @@ Refer src/main/resources/synclite_logger.conf file for all available configurati
 
 ## Application Code Samples (SQL API)
 
-### 1. SQLite : 
+### Transactional Devices : 
 
-SQLite transactional device supports all database operations as supported by SQLite and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as building data-intensive sync-ready applications, Edge + Cloud GenAI search and RAG applications, native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases etc.
+Transactional devices (SQLite, DuckDB, Apache Derby, H2, HyperSQL) support all database operations and performs transactional logging of all the DDL and DML operations performed by the application. These empower developers to build use cases such as building data-intensive sync-ready applications, Edge + Cloud GenAI search and RAG applications, native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases etc.
 
 #### Java
 ```
@@ -57,14 +57,33 @@ import java.sql.Statement;
 import io.synclite.logger.*;
 
 
-public class TestSQLiteDevice {
+public class TestTransactionalDevice {
 	
 	public static Path syncLiteDBPath;
 	public static void appStartup() throws SQLException, ClassNotFoundException {
 		syncLiteDBPath = Path.of(System.getProperty("user.home"), "synclite", "db");
 		Class.forName("io.synclite.logger.SQLite");
-		Path dbPath = syncLiteDBPath.resolve("t.db");
+		//
+		//////////////////////////////////////////////////////
+		//For other types of transactional devices : 
+		//DuckDB : Class.forName("io.synclite.logger.DuckDB");
+		//Apache Derby : Class.forName("io.synclite.logger.Derby");
+		//H2 : Class.forName("io.synclite.logger.H2");
+		//HyperSQL : Class.forName("io.synclite.logger.HyperSQL");
+		//////////////////////////////////////////////////////
+		//
+
+		Path dbPath = syncLiteDBPath.resolve("test_tran.db");
 		SQLite.initialize(dbPath, syncLiteDBPath.resolve("synclite_logger.conf"));
+		//
+		//////////////////////////////////////////////////////
+		//For other types of transactional devices : 
+		//DuckDB : DuckDB.initialize(dbPath, syncLiteDBPath.resolve("synclite_logger.conf"));
+		//Apache Derby : Derby.initialize(dbPath, syncLiteDBPath.resolve("synclite_logger.conf"));
+		//H2 : H2.initialize(dbPath, syncLiteDBPath.resolve("synclite_logger.conf"));
+		//HyperSQL : HyperSQL.initialize(dbPath, syncLiteDBPath.resolve("synclite_logger.conf"));
+		//////////////////////////////////////////////////////
+		//
 	}	
 	
 	public void myAppBusinessLogic() throws SQLException {
@@ -73,6 +92,15 @@ public class TestSQLiteDevice {
 		//
 		//Perform some database operations		
 		try (Connection conn = DriverManager.getConnection("jdbc:synclite_sqlite:" + syncLiteDBPath.resolve("test_sqlite.db"))) {
+			//
+		        //////////////////////////////////////////////////////////////////
+			//For other types of transactional devices use following connection strings :
+			//For DuckDB : jdbc:synclite_duckdb:<db_path>
+			//For Apache Derby : jdbc:synclite_derby:<db_path>
+			//For H2 : jdbc:synclite_h2:<db_path>
+			//For HyperSQL : jdbc:synclite_hsqldb:<db_path>
+			///////////////////////////////////////////////////////////////////
+			//
 			try (Statement stmt = conn.createStatement()) { 
 				//Example of executing a DDL : CREATE TABLE. 
 				//You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
@@ -108,15 +136,23 @@ public class TestSQLiteDevice {
 		}
 		//Close SyncLite database/device cleanly.
 		SQLite.closeDevice(Path.of("test_sqlite.db"));
+		//
+		///////////////////////////////////////////////////////
+		//For other types of transactional devices :
+		//DuckDB : DuckDB.closeDevice
+		//Apache Derby : Derby.closeDevice
+		//H2 : H2.closeDevice
+		//HyperSQL : HyperSQL.closeDevice
+		//////////////////////////////////////////////////////
+		//
 		//You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 	}	
 	
 	public static void main(String[] args) throws ClassNotFoundException, SQLException {
 		appStartup();
-		TestSQLiteDevice testApp = new TestSQLiteDevice();
+		TestTransactionalDevice testApp = new TestTransactionalDevice();
 		testApp.myAppBusinessLogic();
 	}
-
 }
 
 ```
@@ -127,12 +163,21 @@ import jaydebeapi
 
 props = {
   "config": "synclite_logger.conf",
-  "device-name" : "sqlite1"
+  "device-name" : "tran1"
 }
 conn = jaydebeapi.connect("io.synclite.logger.SQLite",
-                           "jdbc:synclite_sqlite:c:\\synclite\\python\\data\\test_sqlite.db",
+                           "jdbc:synclite_duckdb:c:\\synclite\\python\\data\\test_sqlite.db",
                            props,
                            "synclite-logger-<version>.jar",)
+#//
+#////////////////////////////////////////////////////////////////
+#For other types of transactional devices use following are the class names and connection strings :
+#For DuckDB - Class : io.synclite.logger.DuckDB, Connection String : jdbc:synclite_duckdb:<db_path>
+#For Apache Derby - Class : io.synclite.logger.Derby, Connection String : jdbc:synclite_derby:<db_path>
+#For H2 - Class : io.synclite.logger.H2, Connection String : jdbc:synclite_h2:<db_path>
+#For HyperSQL - Class : io.synclite.logger.HyperSQL, Connection String : jdbc:synclite_hsqldb:<db_path>
+#/////////////////////////////////////////////////////////////////
+#//
 
 curs = conn.cursor()
 
@@ -162,11 +207,12 @@ curs.execute("close database c:\\synclite\\python\\data\\test_sqlite.db");
 #You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 ```
 
-### 2. DuckDB : 
+### Appender Devices :
 
-DuckDB transactional device supports all database operations and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as building data-intensive sync-ready applications, Edge + Cloud GenAI search and RAG applications, native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases etc.
+Appender devices (SQLiteAppender, DuckDBAppender, DerbyAppender, H2Appender, HyperSQLAppender) supports all DDL operations and Prepared Statement based INSERT operations and are highly optimized for high speed concurrent batched data ingestion, performing logging of the ingested data. Unlike transactional devices, appender devices only allow INSERT DML operations (UPDATE and DELETE are not supported). Appender devices empower developers to build high volume streaming applications enabled with last mile data integration from thousands of edge points into centralized database destinations as well as in-app analytics by enabling fast read access to ingested data from the underlying local embedded databases storing the ingested streamed data.
 
 #### Java
+
 ```
 package testApp;
 
@@ -178,477 +224,124 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import io.synclite.logger.*;
 
-
-public class TestDuckDBDevice {
-	
+public class TestAppenderDevice {
 	public static Path syncLiteDBPath;
+
 	public static void appStartup() throws SQLException, ClassNotFoundException {
 		syncLiteDBPath = Path.of(System.getProperty("user.home"), "synclite", "db");
-		Class.forName("io.synclite.logger.DuckDB");
-		Path dbPath = syncLiteDBPath.resolve("test_duckdb.db");
-		DuckDB.initialize(dbPath, syncLiteDBPath.resolve("synclite_logger.conf"));
-	}	
-	
+		Class.forName("io.synclite.logger.SQLiteAppender");
+		//
+		//////////////////////////////////////////////////////
+		//For other types of appender devices : 
+		//DuckDB : Class.forName("io.synclite.logger.DuckDBAppender");
+		//Apache Derby : Class.forName("io.synclite.logger.DerbyAppender");
+		//H2 : Class.forName("io.synclite.logger.H2Appender");
+		//HyperSQL : Class.forName("io.synclite.logger.HyperSQLAppender");
+		//////////////////////////////////////////////////////
+		//
+		Path dbPath = syncLiteDBPath.resolve("test_appender.db");
+		SQLiteAppender.initialize(dbPath, syncLiteDBPath.resolve("synclite_logger.conf"));
+	}
+
 	public void myAppBusinessLogic() throws SQLException {
 		//
-		//Some application business logic
+		// Some application business logic
 		//
-		//Perform some database operations		
-		try (Connection conn = DriverManager.getConnection("jdbc:synclite_duckdb:" + syncLiteDBPath.resolve("test_duckdb.db"))) {
-			try (Statement stmt = conn.createStatement()) { 
-				//Example of executing a DDL : CREATE TABLE. 
-				//You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
+		// Perform some database operations
+		try (Connection conn = DriverManager.getConnection("jdbc:synclite_sqlite_appender:" + syncLiteDBPath.resolve("test_appender.db"))) {
+			//
+		        //////////////////////////////////////////////////////////////////
+			//For other types of appender devices use following connection strings :
+			//For DuckDBAppender : jdbc:synclite_duckdb_appender:<db_path>
+			//For DerbyAppender : jdbc:synclite_derby_appender:<db_path>
+			//For H2Appender : jdbc:synclite_h2_appender:<db_path>
+			//For HyperSQLAppender : jdbc:synclite_hsqldb_appender:<db_path>
+			///////////////////////////////////////////////////////////////////
+			//
+			try (Statement stmt = conn.createStatement()) {
+				// Example of executing a DDL : CREATE TABLE.
+				// You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
 				stmt.execute("CREATE TABLE IF NOT EXISTS feedback(rating INT, comment TEXT)");
-				
-				//Example of performing INSERT
-				stmt.execute("INSERT INTO feedback VALUES(3, 'Good product')");				
 			}
-			
-			//Example of setting Auto commit OFF to implement transactional semantics
-			conn.setAutoCommit(false);
-			try (Statement stmt = conn.createStatement()) { 
-				//Example of performing basic DML operations INSERT/UPDATE/DELETE
-				stmt.execute("UPDATE feedback SET comment = 'Better product' WHERE rating = 3");
-				stmt.execute("INSERT INTO feedback VALUES (1, 'Poor product')");
-				stmt.execute("DELETE FROM feedback WHERE rating = 1");
-			}
-			conn.commit();
-			conn.setAutoCommit(true);
-			
-			//Example of Prepared Statement functionality for bulk insert.			
-			try(PreparedStatement pstmt = conn.prepareStatement("INSERT INTO feedback VALUES(?, ?)")) {
+
+			//
+			// Example of Prepared Statement functionality for bulk insert.
+			// Note that Appender Devices allows all DDL operations, INSERT INTO DML operations (UPDATES and DELETES are not allowed) and SELECT queries.
+			//
+			try (PreparedStatement pstmt = conn.prepareStatement("INSERT INTO feedback VALUES(?, ?)")) {
 				pstmt.setInt(1, 4);
 				pstmt.setString(2, "Excellent Product");
 				pstmt.addBatch();
-				
+
 				pstmt.setInt(1, 5);
 				pstmt.setString(2, "Outstanding Product");
 				pstmt.addBatch();
-				
-				pstmt.executeBatch();			
+
+				pstmt.executeBatch();
 			}
 		}
-		//Close SyncLite database/device cleanly.
-		DuckDB.closeDevice(Path.of("test_duckdb.db"));
-		//You can also close all open databases in a single SQL : CLOSE ALL DATABASES
-	}	
-	
+		// Close SyncLite database/device cleanly.
+		SQLiteAppender.closeDevice(Path.of("test_appender.db"));
+		//
+		///////////////////////////////////////////////////////
+		//For other types of appender devices :
+		//DuckDBAppender : DuckDBAppender.closeDevice
+		//DerbyAppender : DerbyAppender.closeDevice
+		//H2Appender : H2Appender.closeDevice
+		//HyperSQLAppender : HyperSQLAppender.closeDevice
+		//////////////////////////////////////////////////////
+		//
+		// You can also close all open databases/devices in a single SQL : CLOSE ALL
+		// DATABASES
+	}
+
 	public static void main(String[] args) throws ClassNotFoundException, SQLException {
 		appStartup();
-		TestDuckDBDevice testApp = new TestDuckDBDevice();
+		TestAppenderDevice testApp = new TestAppenderDevice();
 		testApp.myAppBusinessLogic();
 	}
 
 }
-
 ```
-#### Python   
+
+#### Python
 
 ```
 import jaydebeapi
-
 props = {
   "config": "synclite_logger.conf",
-  "device-name" : "duckdb1"
+  "device-name" : "appender1"
 }
-conn = jaydebeapi.connect("io.synclite.logger.DuckDB",
-                           "jdbc:synclite_duckdb:c:\\synclite\\python\\data\\test_duckdb.db",
+conn = jaydebeapi.connect("io.synclite.logger.SQLiteAppender",
+                           "jdbc:synclite_sqlite_appender:c:\\synclite\\python\\data\\test_appender.db",
                            props,
                            "synclite-logger-<version>.jar",)
+#//
+#////////////////////////////////////////////////////////////////
+#For other types of appender devices use following are the class names and connection strings :
+#For DuckDBAppender - Class : io.synclite.logger.DuckDBAppender, Connection String : jdbc:synclite_duckdb_appender:<db_path>
+#For DerbyAppender - Class : io.synclite.logger.DerbyAppender, Connection String : jdbc:synclite_derby_appender:<db_path>
+#For H2Appender - Class : io.synclite.logger.H2Appender, Connection String : jdbc:synclite_h2_appender:<db_path>
+#For HyperSQLAppender - Class : io.synclite.logger.HyperSQLAppender, Connection String : jdbc:synclite_hsqldb_appender:<db_path>
+#/////////////////////////////////////////////////////////////////
+#//
 
 curs = conn.cursor()
 
-#Example of executing a DDL : CEATE TABLE.
+#Example of executing a DDL : CREATE TABLE.
 #You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
 curs.execute('CREATE TABLE IF NOT EXISTS feedback(rating INT, comment TEXT)')
 
-#Example of performing basic DML operations INSERT/UPDATE/DELETE
-curs.execute("insert into feedback values (3, 'Good product')")
-
-#Example of setting Auto commit OFF to implement transactional semantics
-conn.jconn.setAutoCommit(False)
-curs.execute("update feedback set comment = 'Better product' where rating = 3")
-curs.execute("insert into feedback values (1, 'Poor product')")
-curs.execute("delete from feedback where rating = 1")
-conn.commit()
-conn.jconn.setAutoCommit(True)
-
-
 #Example of Prepared Statement functionality for bulk insert.
 args = [[4, 'Excellent product'],[5, 'Outstanding product']]
 curs.executemany("insert into feedback values (?, ?)", args)
 
 #Close SyncLite database/device cleanly.
-curs.execute("close database c:\\synclite\\python\\data\\test_duckdb.db");
+curs.execute("close database c:\\synclite\\python\\data\\test_appender.db");
 
 #You can also close all open databases in a single SQL : CLOSE ALL DATABASES
 ```
 
-### 3. Apache Derby : 
-
-Apache Derby transactional device supports all database operations and performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as building data-intensive sync-ready applications, Edge + Cloud GenAI search and RAG applications, native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases etc.
-
-#### Java
-```
-package testApp;
-
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
-import io.synclite.logger.*;
-
-
-public class TestDerbyDevice {
-	
-	public static Path syncLiteDBPath;
-	public static void appStartup() throws SQLException, ClassNotFoundException {
-		syncLiteDBPath = Path.of(System.getProperty("user.home"), "synclite", "db");
-		Class.forName("io.synclite.logger.Derby");
-		Path dbPath = syncLiteDBPath.resolve("test_derby.db");
-		Derby.initialize(dbPath, syncLiteDBPath.resolve("synclite_logger.conf"));
-	}	
-	
-	public void myAppBusinessLogic() throws SQLException {
-		//
-		//Some application business logic
-		//
-		//Perform some database operations		
-		try (Connection conn = DriverManager.getConnection("jdbc:synclite_derby:" + syncLiteDBPath.resolve("test_derby.db"))) {
-			try (Statement stmt = conn.createStatement()) { 
-				//Example of executing a DDL : CREATE TABLE. 
-				//You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
-				stmt.execute("CREATE TABLE feedback(rating INT, comment TEXT)");
-				
-				//Example of performing INSERT
-				stmt.execute("INSERT INTO feedback VALUES(3, 'Good product')");				
-			}
-			
-			//Example of setting Auto commit OFF to implement transactional semantics
-			conn.setAutoCommit(false);
-			try (Statement stmt = conn.createStatement()) { 
-				//Example of performing basic DML operations INSERT/UPDATE/DELETE
-				stmt.execute("UPDATE feedback SET comment = 'Better product' WHERE rating = 3");
-				stmt.execute("INSERT INTO feedback VALUES (1, 'Poor product')");
-				stmt.execute("DELETE FROM feedback WHERE rating = 1");
-			}
-			conn.commit();
-			conn.setAutoCommit(true);
-			
-			//Example of Prepared Statement functionality for bulk insert.			
-			try(PreparedStatement pstmt = conn.prepareStatement("INSERT INTO feedback VALUES(?, ?)")) {
-				pstmt.setInt(1, 4);
-				pstmt.setString(2, "Excellent Product");
-				pstmt.addBatch();
-				
-				pstmt.setInt(1, 5);
-				pstmt.setString(2, "Outstanding Product");
-				pstmt.addBatch();
-				
-				pstmt.executeBatch();			
-			}
-		}
-		//Close SyncLite database/device cleanly.
-		Derby.closeDevice(Path.of("test_derby.db"));
-		//You can also close all open databases in a single SQL : CLOSE ALL DATABASES
-	}	
-	
-	public static void main(String[] args) throws ClassNotFoundException, SQLException {
-		appStartup();
-		TestDerbyDevice testApp = new TestDerbyDevice();
-		testApp.myAppBusinessLogic();
-	}
-
-}
-
-```
-#### Python   
-
-```
-import jaydebeapi
-
-props = {
-  "config": "synclite_logger.conf",
-  "device-name" : "derby1"
-}
-conn = jaydebeapi.connect("io.synclite.logger.Derby",
-                           "jdbc:synclite_derby:c:\\synclite\\python\\data\\t.db",
-                           props,
-                           "synclite-logger-<version>.jar",)
-
-curs = conn.cursor()
-
-#Example of executing a DDL : CEATE TABLE.
-#You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
-curs.execute('CREATE TABLE feedback(rating INT, comment TEXT)')
-
-#Example of performing basic DML operations INSERT/UPDATE/DELETE
-curs.execute("insert into feedback values (3, 'Good product')")
-
-#Example of setting Auto commit OFF to implement transactional semantics
-conn.jconn.setAutoCommit(False)
-curs.execute("update feedback set comment = 'Better product' where rating = 3")
-curs.execute("insert into feedback values (1, 'Poor product')")
-curs.execute("delete from feedback where rating = 1")
-conn.commit()
-conn.jconn.setAutoCommit(True)
-
-
-#Example of Prepared Statement functionality for bulk insert.
-args = [[4, 'Excellent product'],[5, 'Outstanding product']]
-curs.executemany("insert into feedback values (?, ?)", args)
-
-#Close SyncLite database/device cleanly.
-curs.execute("close database c:\\synclite\\python\\data\\t.db");
-
-#You can also close all open databases in a single SQL : CLOSE ALL DATABASES
-```
-
-### 4. H2 : 
-
-H2 device supports all SQL operations, performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
-
-#### Java
-```
-package testApp;
-
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
-import io.synclite.logger.*;
-
-
-public class TestH2Device {
-	
-	public static Path syncLiteDBPath;
-	public static void appStartup() throws SQLException, ClassNotFoundException {
-		syncLiteDBPath = Path.of(System.getProperty("user.home"), "synclite", "db");
-		Class.forName("io.synclite.logger.H2");
-		Path dbPath = syncLiteDBPath.resolve("t.db");
-		H2.initialize(dbPath, syncLiteDBPath.resolve("synclite_logger.conf"));
-	}	
-	
-	public void myAppBusinessLogic() throws SQLException {
-		//
-		//Some application business logic
-		//
-		//Perform some database operations		
-		try (Connection conn = DriverManager.getConnection("jdbc:synclite_h2:" + syncLiteDBPath.resolve("t.db"))) {
-			try (Statement stmt = conn.createStatement()) { 
-				//Example of executing a DDL : CREATE TABLE. 
-				//You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
-				stmt.execute("CREATE TABLE feedback(rating INT, comment TEXT)");
-				
-				//Example of performing INSERT
-				stmt.execute("INSERT INTO feedback VALUES(3, 'Good product')");				
-			}
-			
-			//Example of setting Auto commit OFF to implement transactional semantics
-			conn.setAutoCommit(false);
-			try (Statement stmt = conn.createStatement()) { 
-				//Example of performing basic DML operations INSERT/UPDATE/DELETE
-				stmt.execute("UPDATE feedback SET comment = 'Better product' WHERE rating = 3");
-				stmt.execute("INSERT INTO feedback VALUES (1, 'Poor product')");
-				stmt.execute("DELETE FROM feedback WHERE rating = 1");
-			}
-			conn.commit();
-			conn.setAutoCommit(true);
-			
-			//Example of Prepared Statement functionality for bulk insert.			
-			try(PreparedStatement pstmt = conn.prepareStatement("INSERT INTO feedback VALUES(?, ?)")) {
-				pstmt.setInt(1, 4);
-				pstmt.setString(2, "Excellent Product");
-				pstmt.addBatch();
-				
-				pstmt.setInt(1, 5);
-				pstmt.setString(2, "Outstanding Product");
-				pstmt.addBatch();
-				
-				pstmt.executeBatch();			
-			}
-		}
-		//Close SyncLite database/device cleanly.
-		H2.closeDevice(Path.of("t.db"));
-		//You can also close all open databases in a single SQL : CLOSE ALL DATABASES
-	}	
-	
-	public static void main(String[] args) throws ClassNotFoundException, SQLException {
-		appStartup();
-		TestH2Device testApp = new TestH2Device();
-		testApp.myAppBusinessLogic();
-	}
-
-}
-
-```
-#### Python   
-
-```
-import jaydebeapi
-
-props = {
-  "config": "synclite_logger.conf",
-  "device-name" : "h2device1"
-}
-conn = jaydebeapi.connect("io.synclite.logger.H2",
-                           "jdbc:synclite_h2:c:\\synclite\\python\\data\\t.db",
-                           props,
-                           "synclite-logger-<version>.jar",)
-
-curs = conn.cursor()
-
-#Example of executing a DDL : CEATE TABLE.
-#You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
-curs.execute('CREATE TABLE feedback(rating INT, comment TEXT)')
-
-#Example of performing basic DML operations INSERT/UPDATE/DELETE
-curs.execute("insert into feedback values (3, 'Good product')")
-
-#Example of setting Auto commit OFF to implement transactional semantics
-conn.jconn.setAutoCommit(False)
-curs.execute("update feedback set comment = 'Better product' where rating = 3")
-curs.execute("insert into feedback values (1, 'Poor product')")
-curs.execute("delete from feedback where rating = 1")
-conn.commit()
-conn.jconn.setAutoCommit(True)
-
-
-#Example of Prepared Statement functionality for bulk insert.
-args = [[4, 'Excellent product'],[5, 'Outstanding product']]
-curs.executemany("insert into feedback values (?, ?)", args)
-
-#Close SyncLite database/device cleanly.
-curs.execute("close database c:\\synclite\\python\\data\\t.db");
-
-#You can also close all open databases in a single SQL : CLOSE ALL DATABASES
-```
-
-### 5. HyperSQL : 
-
-HyperSQL device supports all SQL operations, performs transactional logging of all the DDL and DML operations performed by the application. It empowers developers to build use cases such as native SQL (hot) hot data stores, SQL application caches, edge enablement of cloud databases, building OLTP + OLAP solutions etc.
-
-#### Java
-```
-package testApp;
-
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
-import io.synclite.logger.*;
-
-
-public class TestHyperSQLDevice {
-	
-	public static Path syncLiteDBPath;
-	public static void appStartup() throws SQLException, ClassNotFoundException {
-		syncLiteDBPath = Path.of(System.getProperty("user.home"), "synclite", "db");
-		Class.forName("io.synclite.logger.HyperSQL");
-		Path dbPath = syncLiteDBPath.resolve("t.db");
-		HyperSQL.initialize(dbPath, syncLiteDBPath.resolve("synclite_logger.conf"));
-	}	
-	
-	public void myAppBusinessLogic() throws SQLException {
-		//
-		//Some application business logic
-		//
-		//Perform some database operations		
-		try (Connection conn = DriverManager.getConnection("jdbc:synclite_hsqldb:" + syncLiteDBPath.resolve("t.db"))) {
-			try (Statement stmt = conn.createStatement()) { 
-				//Example of executing a DDL : CREATE TABLE. 
-				//You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
-				stmt.execute("CREATE TABLE feedback(rating INT, comment TEXT)");
-				
-				//Example of performing INSERT
-				stmt.execute("INSERT INTO feedback VALUES(3, 'Good product')");				
-			}
-			
-			//Example of setting Auto commit OFF to implement transactional semantics
-			conn.setAutoCommit(false);
-			try (Statement stmt = conn.createStatement()) { 
-				//Example of performing basic DML operations INSERT/UPDATE/DELETE
-				stmt.execute("UPDATE feedback SET comment = 'Better product' WHERE rating = 3");
-				stmt.execute("INSERT INTO feedback VALUES (1, 'Poor product')");
-				stmt.execute("DELETE FROM feedback WHERE rating = 1");
-			}
-			conn.commit();
-			conn.setAutoCommit(true);
-			
-			//Example of Prepared Statement functionality for bulk insert.			
-			try(PreparedStatement pstmt = conn.prepareStatement("INSERT INTO feedback VALUES(?, ?)")) {
-				pstmt.setInt(1, 4);
-				pstmt.setString(2, "Excellent Product");
-				pstmt.addBatch();
-				
-				pstmt.setInt(1, 5);
-				pstmt.setString(2, "Outstanding Product");
-				pstmt.addBatch();
-				
-				pstmt.executeBatch();			
-			}
-		}
-		//Close SyncLite database/device cleanly.
-		HyperSQL.closeDevice(Path.of("t.db"));
-		//You can also close all open databases in a single SQL : CLOSE ALL DATABASES
-	}	
-	
-	public static void main(String[] args) throws ClassNotFoundException, SQLException {
-		appStartup();
-		TestH2Device testApp = new TestH2Device();
-		testApp.myAppBusinessLogic();
-	}
-
-}
-
-```
-#### Python   
-
-```
-import jaydebeapi
-
-props = {
-  "config": "synclite_logger.conf",
-  "device-name" : "hsqldb1"
-}
-conn = jaydebeapi.connect("io.synclite.logger.HyperSQL",
-                           "jdbc:synclite_hsqldb:c:\\synclite\\python\\data\\t.db",
-                           props,
-                           "synclite-logger-<version>.jar",)
-
-curs = conn.cursor()
-
-#Example of executing a DDL : CEATE TABLE.
-#You can execute other DDL operations : DROP TABLE, ALTER TABLE, RENAME TABLE.
-curs.execute('CREATE TABLE feedback(rating INT, comment TEXT)')
-
-#Example of performing basic DML operations INSERT/UPDATE/DELETE
-curs.execute("insert into feedback values (3, 'Good product')")
-
-#Example of setting Auto commit OFF to implement transactional semantics
-conn.jconn.setAutoCommit(False)
-curs.execute("update feedback set comment = 'Better product' where rating = 3")
-curs.execute("insert into feedback values (1, 'Poor product')")
-curs.execute("delete from feedback where rating = 1")
-conn.commit()
-conn.jconn.setAutoCommit(True)
-
-
-#Example of Prepared Statement functionality for bulk insert.
-args = [[4, 'Excellent product'],[5, 'Outstanding product']]
-curs.executemany("insert into feedback values (?, ?)", args)
-
-#Close SyncLite database/device cleanly.
-curs.execute("close database c:\\synclite\\python\\data\\t.db");
-
-#You can also close all open databases in a single SQL : CLOSE ALL DATABASES
-```
 
 # Deploying SyncLite Consolidator
 
