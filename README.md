@@ -168,7 +168,7 @@ props = {
 conn = jaydebeapi.connect("io.synclite.logger.SQLite",
                            "jdbc:synclite_duckdb:c:\\synclite\\python\\data\\test_sqlite.db",
                            props,
-                           "synclite-logger-<version>.jar",)
+                           "synclite-logger-extended-<version>.jar",)
 #//
 #////////////////////////////////////////////////////////////////
 #For other types of transactional devices use following are the class names and connection strings :
@@ -315,7 +315,7 @@ props = {
 conn = jaydebeapi.connect("io.synclite.logger.SQLiteAppender",
                            "jdbc:synclite_sqlite_appender:c:\\synclite\\python\\data\\test_appender.db",
                            props,
-                           "synclite-logger-<version>.jar",)
+                           "synclite-logger-extended-<version>.jar",)
 #//
 #////////////////////////////////////////////////////////////////
 #For other types of appender devices use following are the class names and connection strings :
